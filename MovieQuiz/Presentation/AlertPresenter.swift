@@ -39,6 +39,8 @@ extension AlertPresenterImpl: AlertPresenter {
         let action = UIAlertAction(title: alertModel.buttonText, style: .default) { _ in
             alertModel.buttonAction()
         }
+        
+        alert.view.accessibilityIdentifier = "Final game"
             
         alert.addAction(action)
         

@@ -15,12 +15,12 @@ struct MoviesLoader: MoviesLoading {
     
     //MARK: - Private Properties
     
-    private var networkClient = NetworkClient() //было let
+    private let networkClient: NetworkRouting
     
     //MARK: - Initializators
     
     init(networkClient: NetworkRouting = NetworkClient()) {
-        self.networkClient = networkClient as! NetworkClient //в примере без as! NetworkClient
+        self.networkClient = networkClient
     }
     
     //MARK: - URL
