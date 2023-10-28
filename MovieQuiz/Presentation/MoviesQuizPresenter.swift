@@ -12,7 +12,7 @@ final class MoviesQuizPresenter: QuestionFactoryDelegate {
     
     private let statisticService: StatisticService!
     private var questionFactory: QuestionFactory?
-    private weak var viewController: MovieQuizViewController?
+    private weak var viewController: MovieQuizViewControllerProtocol?
     
     var currentQuestion: QuizQuestion?
     let questionsAmount: Int = 10
@@ -20,7 +20,7 @@ final class MoviesQuizPresenter: QuestionFactoryDelegate {
     var correctAnswers = 0
     
     
-    init(viewController: MovieQuizViewController) {
+    init(viewController: MovieQuizViewControllerProtocol) {
         self.viewController = viewController
         
         statisticService = StatisticServiceImplementation()
@@ -60,14 +60,6 @@ final class MoviesQuizPresenter: QuestionFactoryDelegate {
         proceedWithAnswer(isCorrect: givenAnswer == currentQuestion.correctAnswer)
     }
     
-    private func convert(model: QuizQuestion) -> QuizStepViewModel {
-        let questionStep = QuizStepViewModel(
-            image: UIImage(data: model.image) ?? UIImage(),
-            question: model.text,
-            questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
-        return questionStep
-    }
-    
     private func showNextQuestionOrResults() {
         if self.isLastQuestion(){
             viewController?.showFinalResults()
@@ -95,6 +87,14 @@ final class MoviesQuizPresenter: QuestionFactoryDelegate {
     }
     
     // MARK: - Methods
+    
+    func convert(model: QuizQuestion) -> QuizStepViewModel {
+        let questionStep = QuizStepViewModel(
+            image: UIImage(data: model.image) ?? UIImage(),
+            question: model.text,
+            questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
+        return questionStep
+    }
     
     func noButtonClicked() {
         didAnswer(isYes: false)
