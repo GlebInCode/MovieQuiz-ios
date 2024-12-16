@@ -15,7 +15,15 @@ struct MoviesLoader: MoviesLoading {
     
     //MARK: - Private Properties
     
-    private let networkClient = NetworkClient()
+    private let networkClient: NetworkRouting
+    
+    //MARK: - Initializators
+    
+    init(networkClient: NetworkRouting = NetworkClient()) {
+        self.networkClient = networkClient
+    }
+    
+    //MARK: - URL
     
     private var mostPopularMoviesUrl: URL {
         guard let url = URL(string: "https://imdb-api.com/en/API/Top250Movies/k_zcuw1ytf") else {
