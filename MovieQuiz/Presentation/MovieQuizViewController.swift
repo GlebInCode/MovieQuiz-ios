@@ -41,7 +41,7 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
     
     //MARK: - Methods
     
-    func showFinalResults() { //show
+    func showFinalResults() {
         
         let alertModel = AlertModel(
             title: "Этот раунд окончен!",
@@ -49,7 +49,6 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
             buttonText: "Сыграть еще раз",
             buttonAction: { [weak self] in
                 self?.presenter.restsrtGame()
-                //self?.questionFactory?.requestNextQuestion()
             }
         )
         alertPresenter?.show(with: alertModel)

@@ -44,9 +44,6 @@ final class MoviesQuizPresenter: QuestionFactoryDelegate {
     func didReceiveNextQuestion(_ question: QuizQuestion) {
         self.currentQuestion = question
         let viewModel = convert(model: question)
-//        DispatchQueue.main.async { [weak self] in
-//                    self?.viewController?.show(quiz: viewModel)
-//                }
         viewController?.show(quiz: viewModel)
     }
     
