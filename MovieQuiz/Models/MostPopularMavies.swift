@@ -8,28 +8,25 @@
 import Foundation
 
 struct MostPopularMovies: Codable {
-    let errorMessage: String
-    let items: [MostPopularMovie]
+    let docs: [MostPopularMovie]
+    let total: Int
+    let limit: Int
+    let page: Int
+    let pages: Int
 }
 
 struct MostPopularMovie: Codable {
-    let title: String
-    let rating: String
-    let imageURL: URL
-    
-    var resizedImageURL: URL {
-        let urlString = imageURL.absoluteString
-        let imageUrlString = urlString.components(separatedBy: "._")[0] + "._V0_UX600_.jpg"
-        
-        guard let newURL = URL(string: imageUrlString) else {
-            return imageURL
-        }
-        return newURL
-    }
-    
-    private enum CodingKeys: String, CodingKey {
-        case title = "fullTitle"
-        case rating = "imDbRating"
-        case imageURL = "image"
-    }
+    let id: Int
+    let name: String
+    let year: Int
+    let rating: Rating
+    let poster: Poster
+}
+
+struct Rating: Codable {
+    let kp: Double
+}
+
+struct Poster: Codable {
+    let url: URL
 }

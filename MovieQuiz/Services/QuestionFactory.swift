@@ -33,7 +33,7 @@ extension QuestionFactoryImpl: QuestionFactory {
                 guard let self = self else { return }
                 switch result {
                 case .success(let mostPopularMovies):
-                    self.movies = mostPopularMovies.items
+                    self.movies = mostPopularMovies.docs
                     self.delegate?.didLoadDataFromServer()
                 case .failure(let error):
                     self.delegate?.didFailToLoadData(with: error)
@@ -52,13 +52,13 @@ extension QuestionFactoryImpl: QuestionFactory {
             var imageData = Data()
            
            do {
-                imageData = try Data(contentsOf: movie.resizedImageURL)
+               imageData = try Data(contentsOf: movie.poster.url)
             } catch {
                 print("Failed to load image")
             }
             
-            let rating = Float(movie.rating) ?? 0
-            
+            let rating = Float(movie.rating.kp)
+
             let text = "Рейтинг этого фильма больше чем 7?"
             let correctAnswer = rating > 7
             
