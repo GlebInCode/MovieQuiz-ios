@@ -14,7 +14,8 @@ final class QuestionFactoryImpl {
     private let moviesLoader: MoviesLoading
     private weak var delegate: QuestionFactoryDelegate?
     private var movies: [MostPopularMovie] = []
-    
+    private var movieIndicesForQuestions: Set<Int> = []
+
     //MARK: - Init
     
     init(moviesLoader: MoviesLoading, delegate: QuestionFactoryDelegate?) {
@@ -45,10 +46,8 @@ extension QuestionFactoryImpl: QuestionFactory {
     func requestNextQuestion() {
         DispatchQueue.global().async { [weak self] in
             guard let self = self else { return }
-            let index = (0..<self.movies.count).randomElement() ?? 0
-            
-            guard let movie = self.movies[safe: index] else { return }
-            
+            guard let movie = fillMovieIndicesForQuiz() else { return }
+
             var imageData = Data()
            
            do {
@@ -72,5 +71,19 @@ extension QuestionFactoryImpl: QuestionFactory {
                 self.delegate?.didReceiveNextQuestion(question)
             }
         }
+    }
+
+    private func fillMovieIndicesForQuiz() -> MostPopularMovie? {
+        if movieIndicesForQuestions.isEmpty {
+            while movieIndicesForQuestions.count < 10 {
+                guard let index = (0..<movies.count).randomElement() else {continue}
+                movieIndicesForQuestions.insert(index)
+            }
+        }
+
+        let index = movieIndicesForQuestions.removeFirst()
+        let movie = movies[safe: index]
+
+        return movie
     }
 }
