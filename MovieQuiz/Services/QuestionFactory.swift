@@ -55,21 +55,43 @@ extension QuestionFactoryImpl: QuestionFactory {
             } catch {
                 print("Failed to load image")
             }
-            
+
+            let questionType = QuestionType.random()
+
+            let questionSegment = getQuestion(type: questionType, movie: movie)
+
+            let question = QuizQuestion(image: imageData,
+                                        text: questionSegment.questionText,
+                                        correctAnswer: questionSegment.correctAnswert)
+
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                self.delegate?.didReceiveNextQuestion(question)
+            }
+        }
+    }
+
+    private func getQuestion(type: QuestionType, movie: MostPopularMovie) -> (questionText: String, correctAnswert: Bool) {
+        switch type {
+        case .year:
+            let year = movie.year
+            var yearQuestion = 0
+            repeat {
+                yearQuestion = year + [-3, -2, -1, 1, 2, 3].randomElement()!
+            } while yearQuestion > 2024
+            let boolQuestion = [">", "<"].randomElement()!
+            let text = "Фильм вышел в прокат \(boolQuestion == ">" ? "позже" : "раньше") \(yearQuestion) года?"
+            let correctAnswer = boolQuestion == ">" ? year > yearQuestion : year < yearQuestion
+            print("year = \(year)")
+            return (text, correctAnswer)
+        case .rating:
             let rating = Float(movie.rating.kp)
             let ratingQuestion = Int(rating) + [1, -1].randomElement()!
             let boolQuestion = [">", "<"].randomElement()!
             let text = "Рейтинг этого фильма \(boolQuestion == ">" ? "больше" : "меньше") чем \(ratingQuestion)?"
             let correctAnswer = boolQuestion == ">" ? rating > Float(ratingQuestion) : rating < Float(ratingQuestion)
-
-            let question = QuizQuestion(image: imageData,
-                                         text: text,
-                                         correctAnswer: correctAnswer)
-            
-            DispatchQueue.main.async { [weak self] in
-                guard let self = self else { return }
-                self.delegate?.didReceiveNextQuestion(question)
-            }
+            print("rating = \(rating)")
+            return (text, correctAnswer)
         }
     }
 

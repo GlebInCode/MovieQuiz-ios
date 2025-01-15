@@ -37,6 +37,7 @@
 		F789D2172AE0300E00831EA5 /* MovieQuizUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F789D2162AE0300E00831EA5 /* MovieQuizUITests.swift */; };
 		F7EACB6B2AAF0515005A3E5E /* YS Display-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F7EACB692AAF0514005A3E5E /* YS Display-Medium.ttf */; };
 		F7EACB6C2AAF0515005A3E5E /* YS Display-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F7EACB6A2AAF0515005A3E5E /* YS Display-Bold.ttf */; };
+		F7EBFBF22D37D9FF001894E1 /* QuestionType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7EBFBF12D37D9FF001894E1 /* QuestionType.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -91,6 +92,7 @@
 		F789D2162AE0300E00831EA5 /* MovieQuizUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MovieQuizUITests.swift; sourceTree = "<group>"; };
 		F7EACB692AAF0514005A3E5E /* YS Display-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "YS Display-Medium.ttf"; sourceTree = "<group>"; };
 		F7EACB6A2AAF0515005A3E5E /* YS Display-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "YS Display-Bold.ttf"; sourceTree = "<group>"; };
+		F7EBFBF12D37D9FF001894E1 /* QuestionType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestionType.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -199,6 +201,7 @@
 			isa = PBXGroup;
 			children = (
 				F77726842AD47C1000D5797E /* QuizeQuestion.swift */,
+				F7EBFBF12D37D9FF001894E1 /* QuestionType.swift */,
 				F77726862AD47C2300D5797E /* QuizResultsViewModel.swift */,
 				F77726882AD47C3000D5797E /* QuizStepViewModel.swift */,
 				F777268A2AD47C4100D5797E /* AlertModel.swift */,
@@ -373,6 +376,7 @@
 				F77726992AD47CD800D5797E /* NetworkClient.swift in Sources */,
 				F77726892AD47C3000D5797E /* QuizStepViewModel.swift in Sources */,
 				F777268D2AD47C4F00D5797E /* GameRecord.swift in Sources */,
+				F7EBFBF22D37D9FF001894E1 /* QuestionType.swift in Sources */,
 				F75BF83A2AE962B300D3EDBB /* MoviesQuizPresenter.swift in Sources */,
 				F77726972AD47CC100D5797E /* StaticService.swift in Sources */,
 				AD1ABAB62831907B00B3E448 /* MovieQuizViewController.swift in Sources */,
