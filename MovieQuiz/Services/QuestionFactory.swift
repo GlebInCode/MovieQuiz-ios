@@ -58,10 +58,11 @@ extension QuestionFactoryImpl: QuestionFactory {
             }
             
             let rating = Float(movie.rating.kp)
+            let ratingQuestion = Int(rating) + [1, -1].randomElement()!
+            let boolQuestion = [">", "<"].randomElement()!
+            let text = "Рейтинг этого фильма \(boolQuestion == ">" ? "больше" : "меньше") чем \(ratingQuestion)?"
+            let correctAnswer = boolQuestion == ">" ? rating > Float(ratingQuestion) : rating < Float(ratingQuestion)
 
-            let text = "Рейтинг этого фильма больше чем 7?"
-            let correctAnswer = rating > 7
-            
             let question = QuizQuestion(image: imageData,
                                          text: text,
                                          correctAnswer: correctAnswer)
