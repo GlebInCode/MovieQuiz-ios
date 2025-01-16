@@ -30,48 +30,6 @@ final class QuestionFactoryImpl {
             self?.imageMovies[id] = poster
         }
     }
-}
-
-extension QuestionFactoryImpl: QuestionFactory {
-
-    //MARK: - Public Methods
-
-    func loadData() {
-        moviesLoader.loadMovies { [weak self] result in
-            DispatchQueue.main.async {
-                guard let self = self else { return }
-                switch result {
-                case .success(let mostPopularMovies):
-                    self.movies = mostPopularMovies.docs
-                    self.delegate?.didLoadDataFromServer()
-                case .failure(let error):
-                    self.delegate?.didFailToLoadData(with: error)
-                }
-            }
-        }
-    }
-
-    func requestNextQuestion() {
-        DispatchQueue.global().async { [weak self] in
-            guard let self else { return }
-            guard let movie = fillMovieIndicesForQuiz() else { return }
-
-            let questionType = QuestionType.random()
-
-            let questionSegment = getQuestion(type: questionType, movie: movie)
-
-            guard let poster = imageMovies[movie.id] else { return }
-
-            let question = QuizQuestion(image: poster,
-                                        text: questionSegment.questionText,
-                                        correctAnswer: questionSegment.correctAnswert)
-
-            DispatchQueue.main.async { [weak self] in
-                guard let self = self else { return }
-                self.delegate?.didReceiveNextQuestion(question)
-            }
-        }
-    }
 
     private func getQuestion(type: QuestionType, movie: MostPopularMovie) -> (questionText: String, correctAnswert: Bool) {
         switch type {
@@ -96,7 +54,7 @@ extension QuestionFactoryImpl: QuestionFactory {
     }
 
     private func fillMovieIndicesForQuiz() -> MostPopularMovie? {
-        if movieIndicesForQuestions.isEmpty {
+        if movieIndicesForQuestions.count == 0 {
             while movieIndicesForQuestions.count < 10 {
                 guard let index = (0..<movies.count).randomElement() else {continue}
                 movieIndicesForQuestions.insert(index)
@@ -108,7 +66,6 @@ extension QuestionFactoryImpl: QuestionFactory {
 
         let index = movieIndicesForQuestions.removeFirst()
         let movie = movies[safe: index]
-
         return movie
     }
 
@@ -116,21 +73,75 @@ extension QuestionFactoryImpl: QuestionFactory {
         for index in movieIndicesForQuestions {
             group.enter()
             DispatchQueue.global().async { [weak self] in
-                guard let self else { return }
+                defer {
+                    group.leave()
+                }
+                guard let self else {
+                    return
+                }
                 let id = self.movies[index].id
-                guard self.imageMovies[id] == nil else { return }
+                guard self.imageMovies[id] == nil else {
+                    return
+                }
                 var imageData = Data()
                 do {
                     imageData = try Data(contentsOf: self.movies[index].poster.url)
                     if !imageData.isEmpty {
                         self.safeSetImage(movies[index].id, imageData)
                     }
-                    group.leave()
                 } catch {
                     print("Failed to load image")
-                    group.leave()
                 }
 
+            }
+        }
+    }
+}
+
+extension QuestionFactoryImpl: QuestionFactory {
+
+    //MARK: - Public Methods
+
+    func loadData() {
+        moviesLoader.loadMovies { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                switch result {
+                case .success(let mostPopularMovies):
+                    self.movies = mostPopularMovies.docs
+                    self.delegate?.didLoadDataFromServer()
+                case .failure(let error):
+                    self.delegate?.didFailToLoadData(with: error)
+                }
+            }
+        }
+    }
+
+    func requestNextQuestion() {
+        DispatchQueue.global().async { [weak self] in
+            guard let self else {
+                return
+            }
+            guard let movie = fillMovieIndicesForQuiz() else {
+                return
+            }
+
+            let questionType = QuestionType.random()
+            let questionSegment = getQuestion(type: questionType, movie: movie)
+
+            guard let poster = imageMovies[movie.id] else {
+                return
+            }
+
+            let question = QuizQuestion(image: poster,
+                                        text: questionSegment.questionText,
+                                        correctAnswer: questionSegment.correctAnswert)
+
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else {
+                    return
+                }
+                self.delegate?.didReceiveNextQuestion(question)
             }
         }
     }
