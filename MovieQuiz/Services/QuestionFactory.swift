@@ -8,26 +8,34 @@
 import Foundation
 
 final class QuestionFactoryImpl {
-    
+
     //MARK: - Properties
-    
+
     private let moviesLoader: MoviesLoading
     private weak var delegate: QuestionFactoryDelegate?
     private var movies: [MostPopularMovie] = []
     private var movieIndicesForQuestions: Set<Int> = []
+    private var imageMovies: [Int:Data] = [:]
+    private let serialQueue = DispatchQueue(label: "com.example.serialQueue")
 
     //MARK: - Init
-    
+
     init(moviesLoader: MoviesLoading, delegate: QuestionFactoryDelegate?) {
         self.moviesLoader = moviesLoader
         self.delegate = delegate
     }
+
+    private func safeSetImage(_ id: Int, _ poster: Data) {
+        serialQueue.async { [weak self] in
+            self?.imageMovies[id] = poster
+        }
+    }
 }
 
 extension QuestionFactoryImpl: QuestionFactory {
-    
+
     //MARK: - Public Methods
-    
+
     func loadData() {
         moviesLoader.loadMovies { [weak self] result in
             DispatchQueue.main.async {
@@ -42,25 +50,19 @@ extension QuestionFactoryImpl: QuestionFactory {
             }
         }
     }
-    
+
     func requestNextQuestion() {
         DispatchQueue.global().async { [weak self] in
-            guard let self = self else { return }
+            guard let self else { return }
             guard let movie = fillMovieIndicesForQuiz() else { return }
-
-            var imageData = Data()
-           
-           do {
-               imageData = try Data(contentsOf: movie.poster.url)
-            } catch {
-                print("Failed to load image")
-            }
 
             let questionType = QuestionType.random()
 
             let questionSegment = getQuestion(type: questionType, movie: movie)
 
-            let question = QuizQuestion(image: imageData,
+            guard let poster = imageMovies[movie.id] else { return }
+
+            let question = QuizQuestion(image: poster,
                                         text: questionSegment.questionText,
                                         correctAnswer: questionSegment.correctAnswert)
 
@@ -82,7 +84,6 @@ extension QuestionFactoryImpl: QuestionFactory {
             let boolQuestion = [">", "<"].randomElement()!
             let text = "Фильм вышел в прокат \(boolQuestion == ">" ? "позже" : "раньше") \(yearQuestion) года?"
             let correctAnswer = boolQuestion == ">" ? year > yearQuestion : year < yearQuestion
-            print("year = \(year)")
             return (text, correctAnswer)
         case .rating:
             let rating = Float(movie.rating.kp)
@@ -90,7 +91,6 @@ extension QuestionFactoryImpl: QuestionFactory {
             let boolQuestion = [">", "<"].randomElement()!
             let text = "Рейтинг этого фильма \(boolQuestion == ">" ? "больше" : "меньше") чем \(ratingQuestion)?"
             let correctAnswer = boolQuestion == ">" ? rating > Float(ratingQuestion) : rating < Float(ratingQuestion)
-            print("rating = \(rating)")
             return (text, correctAnswer)
         }
     }
@@ -101,11 +101,37 @@ extension QuestionFactoryImpl: QuestionFactory {
                 guard let index = (0..<movies.count).randomElement() else {continue}
                 movieIndicesForQuestions.insert(index)
             }
+            let group = DispatchGroup()
+            getImagesQuestion(group)
+            group.wait()
         }
 
         let index = movieIndicesForQuestions.removeFirst()
         let movie = movies[safe: index]
 
         return movie
+    }
+
+    private func getImagesQuestion(_ group: DispatchGroup) {
+        for index in movieIndicesForQuestions {
+            group.enter()
+            DispatchQueue.global().async { [weak self] in
+                guard let self else { return }
+                let id = self.movies[index].id
+                guard self.imageMovies[id] == nil else { return }
+                var imageData = Data()
+                do {
+                    imageData = try Data(contentsOf: self.movies[index].poster.url)
+                    if !imageData.isEmpty {
+                        self.safeSetImage(movies[index].id, imageData)
+                    }
+                    group.leave()
+                } catch {
+                    print("Failed to load image")
+                    group.leave()
+                }
+
+            }
+        }
     }
 }
