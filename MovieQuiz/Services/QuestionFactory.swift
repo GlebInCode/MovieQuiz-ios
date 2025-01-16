@@ -8,25 +8,34 @@
 import Foundation
 
 final class QuestionFactoryImpl {
-    
+
     //MARK: - Properties
-    
+
     private let moviesLoader: MoviesLoading
     private weak var delegate: QuestionFactoryDelegate?
     private var movies: [MostPopularMovie] = []
-    
+    private var movieIndicesForQuestions: Set<Int> = []
+    private var imageMovies: [Int:Data] = [:]
+    private let serialQueue = DispatchQueue(label: "com.example.serialQueue")
+
     //MARK: - Init
-    
+
     init(moviesLoader: MoviesLoading, delegate: QuestionFactoryDelegate?) {
         self.moviesLoader = moviesLoader
         self.delegate = delegate
     }
+
+    private func safeSetImage(_ id: Int, _ poster: Data) {
+        serialQueue.async { [weak self] in
+            self?.imageMovies[id] = poster
+        }
+    }
 }
 
 extension QuestionFactoryImpl: QuestionFactory {
-    
+
     //MARK: - Public Methods
-    
+
     func loadData() {
         moviesLoader.loadMovies { [weak self] result in
             DispatchQueue.main.async {
@@ -41,34 +50,87 @@ extension QuestionFactoryImpl: QuestionFactory {
             }
         }
     }
-    
+
     func requestNextQuestion() {
         DispatchQueue.global().async { [weak self] in
-            guard let self = self else { return }
-            let index = (0..<self.movies.count).randomElement() ?? 0
-            
-            guard let movie = self.movies[safe: index] else { return }
-            
-            var imageData = Data()
-           
-           do {
-               imageData = try Data(contentsOf: movie.poster.url)
-            } catch {
-                print("Failed to load image")
-            }
-            
-            let rating = Float(movie.rating.kp)
+            guard let self else { return }
+            guard let movie = fillMovieIndicesForQuiz() else { return }
 
-            let text = "Рейтинг этого фильма больше чем 7?"
-            let correctAnswer = rating > 7
-            
-            let question = QuizQuestion(image: imageData,
-                                         text: text,
-                                         correctAnswer: correctAnswer)
-            
+            let questionType = QuestionType.random()
+
+            let questionSegment = getQuestion(type: questionType, movie: movie)
+
+            guard let poster = imageMovies[movie.id] else { return }
+
+            let question = QuizQuestion(image: poster,
+                                        text: questionSegment.questionText,
+                                        correctAnswer: questionSegment.correctAnswert)
+
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
                 self.delegate?.didReceiveNextQuestion(question)
+            }
+        }
+    }
+
+    private func getQuestion(type: QuestionType, movie: MostPopularMovie) -> (questionText: String, correctAnswert: Bool) {
+        switch type {
+        case .year:
+            let year = movie.year
+            var yearQuestion = 0
+            repeat {
+                yearQuestion = year + [-3, -2, -1, 1, 2, 3].randomElement()!
+            } while yearQuestion > 2024
+            let boolQuestion = [">", "<"].randomElement()!
+            let text = "Фильм вышел в прокат \(boolQuestion == ">" ? "позже" : "раньше") \(yearQuestion) года?"
+            let correctAnswer = boolQuestion == ">" ? year > yearQuestion : year < yearQuestion
+            return (text, correctAnswer)
+        case .rating:
+            let rating = Float(movie.rating.kp)
+            let ratingQuestion = Int(rating) + [1, -1].randomElement()!
+            let boolQuestion = [">", "<"].randomElement()!
+            let text = "Рейтинг этого фильма \(boolQuestion == ">" ? "больше" : "меньше") чем \(ratingQuestion)?"
+            let correctAnswer = boolQuestion == ">" ? rating > Float(ratingQuestion) : rating < Float(ratingQuestion)
+            return (text, correctAnswer)
+        }
+    }
+
+    private func fillMovieIndicesForQuiz() -> MostPopularMovie? {
+        if movieIndicesForQuestions.isEmpty {
+            while movieIndicesForQuestions.count < 10 {
+                guard let index = (0..<movies.count).randomElement() else {continue}
+                movieIndicesForQuestions.insert(index)
+            }
+            let group = DispatchGroup()
+            getImagesQuestion(group)
+            group.wait()
+        }
+
+        let index = movieIndicesForQuestions.removeFirst()
+        let movie = movies[safe: index]
+
+        return movie
+    }
+
+    private func getImagesQuestion(_ group: DispatchGroup) {
+        for index in movieIndicesForQuestions {
+            group.enter()
+            DispatchQueue.global().async { [weak self] in
+                guard let self else { return }
+                let id = self.movies[index].id
+                guard self.imageMovies[id] == nil else { return }
+                var imageData = Data()
+                do {
+                    imageData = try Data(contentsOf: self.movies[index].poster.url)
+                    if !imageData.isEmpty {
+                        self.safeSetImage(movies[index].id, imageData)
+                    }
+                    group.leave()
+                } catch {
+                    print("Failed to load image")
+                    group.leave()
+                }
+
             }
         }
     }
